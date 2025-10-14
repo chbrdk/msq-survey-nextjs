@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: msq-survey-nextjs-mongo
+    restart: unless-stopped
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: msq_survey
+    networks:
+      - survey-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/msq_survey --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: msq-survey-nextjs-app
+    restart: unless-stopped
+    ports:
+      - "7016:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/msq_survey
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_API_URL=http://localhost:7016
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - survey-network
+      - proxy-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  survey-network:
+    driver: bridge
+  proxy-network:
+    external: true
+
