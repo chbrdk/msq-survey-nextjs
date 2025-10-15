@@ -164,7 +164,7 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
   collect_tools: {
     type: 'dynamic',
     handler: 'tools-handler',
-    nextStep: 'map_tools_start'
+    nextStep: 'ai_integration'  // Skip map_tools_start, go directly to AI question
   },
   
   // 12. MAP TOOLS TO PHASES (Iteration Controller)
@@ -175,9 +175,10 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
     nextStep: 'ai_integration'
   },
   
-  // 13. AI INTEGRATION (Static - simple question, always ask tools after)
+  // 13. AI INTEGRATION (Dynamic - conditional routing based on AI usage)
   ai_integration: {
-    type: 'static',
+    type: 'dynamic',
+    handler: 'ai-integration-handler',
     question: "Do you use AI tools in your work?",
     component: {
       type: 'button-group',
@@ -187,7 +188,7 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
         columns: 1
       }
     },
-    nextStep: 'ai_tools_details'  // Always ask for tools
+    nextStep: 'ai_tools_details'  // Will be overridden by handler
   },
   
   // 13b. AI TOOLS DETAILS (Static - smart-multi-select with custom input)

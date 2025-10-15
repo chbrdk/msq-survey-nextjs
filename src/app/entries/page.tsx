@@ -139,7 +139,7 @@ export default function DashboardPage() {
 
     // AI Usage
     const aiUsage = filteredResults.reduce((acc, r) => {
-      const usage = r.collectedData?.ai_usage || 'No response';
+      const usage = r.collectedData?.ai_integration || r.collectedData?.ai_usage || 'No response';
       acc[usage] = (acc[usage] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -228,11 +228,13 @@ export default function DashboardPage() {
         'Phase Time Allocation': phaseAllocation,
         'Phase Activities Breakdown': phaseActivities,
         'Tools Used': (Array.isArray(data.collect_tools) ? data.collect_tools : []).join(', '),
-        'AI Usage': data.ai_usage || '',
+        'AI Usage': data.ai_integration || data.ai_usage || '',
         'AI Tools': (Array.isArray(data.ai_tools_details) ? data.ai_tools_details : []).join(', '),
         'Time Wasters': (Array.isArray(data.time_wasters) ? data.time_wasters : []).join(', '),
         'Collaboration Friction': (Array.isArray(data.collaboration_friction) ? data.collaboration_friction : []).join(', '),
-        'Automation Ideas': (Array.isArray(data.automation_identification) ? data.automation_identification : []).join(', '),
+        'Automation Ideas': data.automation_identification?.responses 
+          ? data.automation_identification.responses.map((r: any) => `${r.question}: ${r.answer}`).join(' | ')
+          : '',
         'Magic Wand Automation': (Array.isArray(data.magic_wand_automation) ? data.magic_wand_automation : []).join(', ')
       };
     });
@@ -286,6 +288,14 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-rose-50 to-blue-50 p-6">
+      <style jsx>{`
+        .glass-card::before {
+          background: linear-gradient(135deg, rgba(4, 190, 254, 0.2) 0%, rgba(186, 230, 253, 0.2) 100%) !important;
+        }
+        .glass-card {
+          box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.1) !important;
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header */}
@@ -534,10 +544,10 @@ export default function DashboardPage() {
           >
             <h3 className="text-lg font-light text-gray-900 mb-4">Department Distribution</h3>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={departmentChartData} layout="horizontal">
+              <BarChart data={departmentChartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis type="number" tick={{ fontSize: 12 }} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={120} />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
+                <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: 'rgba(255, 255, 255, 0.95)', 
@@ -545,7 +555,7 @@ export default function DashboardPage() {
                     borderRadius: '8px'
                   }} 
                 />
-                <Bar dataKey="value" fill="#8b5cf6" radius={[0, 8, 8, 0]} />
+                <Bar dataKey="value" fill="#8b5cf6" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
@@ -624,11 +634,11 @@ export default function DashboardPage() {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        result.collectedData?.ai_usage === 'active' ? 'bg-green-100 text-green-700' :
-                        result.collectedData?.ai_usage === 'experimental' ? 'bg-yellow-100 text-yellow-700' :
+                        (result.collectedData?.ai_integration || result.collectedData?.ai_usage) === 'active' ? 'bg-green-100 text-green-700' :
+                        (result.collectedData?.ai_integration || result.collectedData?.ai_usage) === 'experimental' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-gray-100 text-gray-600'
                       }`}>
-                        {result.collectedData?.ai_usage || 'No data'}
+                        {result.collectedData?.ai_integration || result.collectedData?.ai_usage || 'No data'}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600">
@@ -665,8 +675,9 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass-card p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="glass-card max-w-4xl w-full max-h-[90vh] flex flex-col"
           >
+            <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-light text-gray-900">Survey Details</h2>
@@ -788,6 +799,25 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* Automation Identification */}
+            {selectedEntry.collectedData?.automation_identification && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Automation Identification</h3>
+                {selectedEntry.collectedData.automation_identification.responses && Array.isArray(selectedEntry.collectedData.automation_identification.responses) ? (
+                  <div className="space-y-3">
+                    {selectedEntry.collectedData.automation_identification.responses.map((response: any, idx: number) => (
+                      <div key={idx} className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-sm font-medium text-gray-800 mb-1">{response.question}</p>
+                        <p className="text-sm text-gray-600">{response.answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600">No automation identification data</p>
+                )}
+              </div>
+            )}
+
             {/* Automation Wishes */}
             {Array.isArray(selectedEntry.collectedData?.magic_wand_automation) && selectedEntry.collectedData.magic_wand_automation.length > 0 && (
               <div className="mb-6">
@@ -806,6 +836,7 @@ export default function DashboardPage() {
               <pre className="bg-gray-50 rounded-lg p-4 text-xs overflow-x-auto">
                 {JSON.stringify(selectedEntry.collectedData, null, 2)}
               </pre>
+            </div>
             </div>
           </motion.div>
         </div>

@@ -131,12 +131,22 @@ export const GlassCenteredView = ({
               duration: 0.4,
               ease: [0.4, 0, 0.2, 1],
             }}
-            className="w-full flex items-center justify-center min-h-[400px]"
+            className="w-full flex flex-col items-center justify-center min-h-[400px] space-y-6"
           >
             <div className="relative flex items-center justify-center">
               {/* Ball Loader */}
               <div className="ball-loader" />
             </div>
+            
+            {/* Loading Text */}
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.3 }}
+              className="text-lg text-gray-600 font-light text-center"
+            >
+              Just loading, thank you for being patient!
+            </motion.p>
           </motion.div>
         )}
 

@@ -33,6 +33,8 @@ interface ChatState {
   updateSurveyData: (data: Partial<SurveyData>) => void;
   initializeChat: () => Promise<void>;
   resetChat: () => void;
+  goBack: () => void;
+  canGoBack: () => boolean;
   
   // Auto-save
   saveToLocalStorage: () => void;
@@ -264,6 +266,60 @@ export const useChatStore = create<ChatState>((set, get) => ({
       userId: getUserId(),
       isComplete: false,
     });
+  },
+
+  // Go back to previous step
+  goBack: () => {
+    const { messages, conversationState } = get();
+    
+    // Can't go back if there are no messages or only 1 message (the initial greeting)
+    if (messages.length <= 1) {
+      console.log('⚠️ Cannot go back - no previous steps');
+      return;
+    }
+
+    // Remove last 2 messages (last assistant message and last user message)
+    const newMessages = messages.slice(0, -2);
+    
+    // Get the previous assistant message (which becomes the current one)
+    const previousMessage = newMessages[newMessages.length - 1];
+    
+    if (!previousMessage || !previousMessage.conversationState) {
+      console.log('⚠️ Cannot go back - no valid previous state');
+      return;
+    }
+
+    // Restore state from previous message
+    const previousProgress = calculateProgress(
+      previousMessage.conversationState.currentPhase,
+      previousMessage.conversationState.currentStep,
+      previousMessage.conversationState.iterationState
+    );
+
+    set({
+      messages: newMessages,
+      conversationState: previousMessage.conversationState,
+      currentStep: previousMessage.conversationState.currentStep,
+      currentPhase: previousMessage.conversationState.currentPhase,
+      surveyData: previousMessage.conversationState.collectedData,
+      progress: previousProgress,
+      currentComponent: previousMessage.manifestComponent?.componentConfig || null,
+      error: null,
+    });
+
+    console.log(`⬅️ Went back to step: ${previousMessage.conversationState.currentStep}`);
+    
+    // Save to localStorage
+    get().saveToLocalStorage();
+  },
+
+  // Check if we can go back
+  canGoBack: () => {
+    const { messages, isLoading, isComplete } = get();
+    
+    // Can't go back if loading, completed, or less than 2 messages
+    // (initial greeting + at least one user response)
+    return !isLoading && !isComplete && messages.length > 1;
   },
 
   // Save to localStorage

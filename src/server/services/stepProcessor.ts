@@ -22,6 +22,8 @@ export async function processStep(
   console.log(`📊 Processing step: ${stepId}`, { userResponse });
 
   const stepDef = STEP_DEFINITIONS[stepId];
+  
+  console.log(`📊 Step definition:`, { type: stepDef.type, handler: stepDef.handler });
 
   if (!stepDef) {
     throw new Error(`Unknown step: ${stepId}`);

@@ -8,6 +8,7 @@ import { ParticleBackground } from './ParticleBackground';
 import { HistoryPanel } from './HistoryPanel';
 import { VoiceIndicator } from './VoiceIndicator';
 import { AudioControls } from './AudioControls';
+import { BackButton } from './BackButton';
 
 export const GlassContainer = () => {
   const { messages, isLoading, isInitialized, initializeChat, resetChat, error } =
@@ -70,6 +71,9 @@ export const GlassContainer = () => {
 
       {/* History Panel */}
       <HistoryPanel isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
+      
+      {/* Back Button */}
+      <BackButton />
       
       {/* Voice Features - Nur im Debug-Modus */}
       {isVoiceDebugMode && (

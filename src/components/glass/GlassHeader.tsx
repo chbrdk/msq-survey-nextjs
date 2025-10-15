@@ -4,7 +4,6 @@ import { RotateCcw, History } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useChatStore } from '@/stores/chatStore';
 import { useVoiceStore } from '@/stores/voiceStore';
-import { VoiceToggle } from './VoiceToggle';
 import { useState, useEffect } from 'react';
 
 interface GlassHeaderProps {
@@ -54,9 +53,6 @@ export const GlassHeader = ({ onHistoryToggle, isHistoryOpen }: GlassHeaderProps
       <div className="fixed top-6 right-6 z-50 flex flex-col items-center">
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 mb-4">
-          {/* Voice Toggle - Nur im Debug-Modus */}
-          {isVoiceDebugMode && <VoiceToggle />}
-          
           {/* Speaking Indicator */}
           {isSpeaking && (
             <div className="glass-button w-14 h-14 flex items-center justify-center">

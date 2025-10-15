@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Mic } from 'lucide-react';
+import { Check, Mic, ChevronRight } from 'lucide-react';
 import { useChatStore } from '@/stores/chatStore';
 import { cn } from '@/lib/utils';
 import type { ButtonComponentData } from '@/types';
@@ -321,53 +321,55 @@ export const UdgGlassButtonGroup = ({ data }: UdgGlassButtonGroupProps) => {
               )}
 
               <div className="relative flex items-center gap-3">
-                {/* Checkmark Circle - Rund, näher am Rand */}
-                <motion.div
-                  className={cn(
-                    'w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 relative overflow-hidden',
-                    isSelected
-                      ? 'border-transparent shadow-md'
-                      : 'bg-white/50 border-gray-300 group-hover:border-blue-300 group-hover:bg-white/70'
-                  )}
-                  whileHover={{ scale: 1.15 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                >
-                  {/* Animated Fill Background */}
-                  {isSelected && (
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                        background: '#60a5fa',
-                        borderRadius: '50%'
-                      }}
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ 
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 20,
-                        duration: 0.4
-                      }}
-                    />
-                  )}
+                {/* Multi-Select: Checkmark Circle */}
+                {data.allowMultiple && (
+                  <motion.div
+                    className={cn(
+                      'w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 relative overflow-hidden',
+                      isSelected
+                        ? 'border-transparent shadow-md'
+                        : 'bg-white/50 border-gray-300 group-hover:border-blue-300 group-hover:bg-white/70'
+                    )}
+                    whileHover={{ scale: 1.15 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                  >
+                    {/* Animated Fill Background */}
+                    {isSelected && (
+                      <motion.div
+                        className="absolute inset-0"
+                        style={{
+                          background: '#60a5fa',
+                          borderRadius: '50%'
+                        }}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ 
+                          type: 'spring',
+                          stiffness: 300,
+                          damping: 20,
+                          duration: 0.4
+                        }}
+                      />
+                    )}
 
-                  {/* Checkmark */}
-                  {isSelected && (
-                    <motion.div
-                      initial={{ scale: 0, rotate: -180, opacity: 0 }}
-                      animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                      transition={{ 
-                        delay: 0.15,
-                        type: 'spring', 
-                        stiffness: 400, 
-                        damping: 15 
-                      }}
-                      className="relative z-10"
-                    >
-                      <Check className="w-3 h-3 text-white" strokeWidth={3} />
-                    </motion.div>
-                  )}
-                </motion.div>
+                    {/* Checkmark */}
+                    {isSelected && (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180, opacity: 0 }}
+                        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                        transition={{ 
+                          delay: 0.15,
+                          type: 'spring', 
+                          stiffness: 400, 
+                          damping: 15 
+                        }}
+                        className="relative z-10"
+                      >
+                        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
                 
                 {/* Label */}
                 <span className={cn(
@@ -376,6 +378,21 @@ export const UdgGlassButtonGroup = ({ data }: UdgGlassButtonGroupProps) => {
                 )}>
                   {option.label}
                 </span>
+                
+                {/* Single-Select: Arrow at end */}
+                {!data.allowMultiple && (
+                  <motion.div
+                    className="flex-shrink-0"
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ 
+                      duration: 1.5, 
+                      repeat: Infinity,
+                      ease: 'easeInOut'
+                    }}
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-900" strokeWidth={2} />
+                  </motion.div>
+                )}
               </div>
             </motion.button>
           );

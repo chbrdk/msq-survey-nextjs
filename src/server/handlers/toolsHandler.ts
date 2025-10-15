@@ -14,19 +14,18 @@ export async function handleToolsStep(
 
   // If user already answered, skip GPT and move to next step
   if (userResponse && userResponse !== null && userResponse !== '_auto_continue_') {
-    return {
-      assistantMessage: "Thanks! Moving on...",
-      skipGPT: true,
-      nextStep: 'ai_integration',
-      conversationState: {
-        ...conversationState,
-        currentStep: 'ai_integration',
-        collectedData: {
-          ...collectedData,
-          collect_tools: userResponse
-        }
+    console.log('✅ Tools collected! Moving to ai_integration...');
+    
+    // Recursively call processStep to get the ai_integration question
+    const { processStep } = await import('../services/stepProcessor');
+    return await processStep('ai_integration', null, {
+      ...conversationState,
+      currentStep: 'ai_integration',
+      collectedData: {
+        ...collectedData,
+        collect_tools: userResponse
       }
-    };
+    });
   }
 
   const systemPrompt = `You are a workflow interviewer for marketing agencies.
