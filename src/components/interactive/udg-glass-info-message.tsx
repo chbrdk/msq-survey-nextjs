@@ -15,6 +15,35 @@ interface UdgGlassInfoMessageProps {
   data: InfoMessageComponentData;
 }
 
+// Simple markdown formatter for **bold** and paragraphs
+function formatMessage(text: string): JSX.Element[] {
+  const paragraphs = text.split('\n\n');
+  
+  return paragraphs.map((para, idx) => {
+    // Replace **text** with <strong>text</strong>
+    const parts = para.split(/(\*\*[^*]+\*\*)/g);
+    
+    const formatted = parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-semibold text-gray-900">{part.slice(2, -2)}</strong>;
+      }
+      
+      // Handle bullet points (• or - at start of line)
+      if (part.startsWith('•') || part.startsWith('-')) {
+        return <span key={i} className="block pl-4">{part}</span>;
+      }
+      
+      return <span key={i}>{part}</span>;
+    });
+    
+    return (
+      <p key={idx} className="mb-3 last:mb-0">
+        {formatted}
+      </p>
+    );
+  });
+}
+
 export const UdgGlassInfoMessage = ({ data }: UdgGlassInfoMessageProps) => {
   const [acknowledged, setAcknowledged] = useState(false);
   const { sendResponse, isLoading } = useChatStore();
@@ -62,9 +91,9 @@ export const UdgGlassInfoMessage = ({ data }: UdgGlassInfoMessageProps) => {
           </div>
           
           <div className="flex-1">
-            <p className="text-gray-800 font-light text-base leading-relaxed">
-              {data.message}
-            </p>
+            <div className="text-gray-800 font-light text-base leading-relaxed">
+              {formatMessage(data.message)}
+            </div>
           </div>
         </div>
       </div>

@@ -75,10 +75,39 @@ export async function saveSurveyResult(
   
   await db.collection('results').insertOne({
     userId,
-    data: collectedData,
+    collectedData: collectedData,
     completedAt: new Date()
   });
   
   console.log(`✅ Survey result saved for user: ${userId}`);
+}
+
+export async function getSurveyResults(
+  limit: number = 50,
+  skip: number = 0
+): Promise<any[]> {
+  const db = await getDb();
+  
+  const results = await db.collection('results')
+    .find({})
+    .sort({ completedAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray();
+  
+  console.log(`📊 Retrieved ${results.length} survey results`);
+  return results;
+}
+
+export async function getSurveyResultById(userId: string): Promise<any> {
+  const db = await getDb();
+  
+  const result = await db.collection('results').findOne({ userId });
+  
+  if (result) {
+    console.log(`📂 Retrieved survey result for user: ${userId}`);
+  }
+  
+  return result;
 }
 

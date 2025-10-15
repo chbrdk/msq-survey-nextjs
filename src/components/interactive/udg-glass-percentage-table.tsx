@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle, Send } from 'lucide-react';
+import { AlertCircle, CheckCircle, Send, Plus, X } from 'lucide-react';
 import { useChatStore } from '@/stores/chatStore';
 import { cn } from '@/lib/utils';
 import type { TableComponentData, ValidationRules } from '@/types';
@@ -17,6 +17,7 @@ export const UdgGlassPercentageTable = ({ data, validation }: UdgGlassPercentage
   const [values, setValues] = useState<Record<string, number>>({});
   const [rows, setRows] = useState(data.rows || []);
   const [error, setError] = useState<string | null>(null);
+  const [customInput, setCustomInput] = useState('');
   const { sendResponse, isLoading } = useChatStore();
 
   // Update rows when data changes
@@ -67,10 +68,35 @@ export const UdgGlassPercentageTable = ({ data, validation }: UdgGlassPercentage
     const newRow = {
       id: `phase-${Date.now()}`,
       phase: phaseName,
-      percentage: 0
+      percentage: 0,
+      isCustom: true
     };
     setRows([...rows, newRow]);
     setValues(prev => ({ ...prev, [newRow.id]: 0 }));
+  };
+
+  const handleAddCustom = () => {
+    if (!customInput.trim()) return;
+    
+    const newRow = {
+      id: `custom-${Date.now()}`,
+      phase: customInput.trim(),
+      activity: customInput.trim(),
+      percentage: 0,
+      isCustom: true
+    };
+    setRows([...rows, newRow]);
+    setValues(prev => ({ ...prev, [newRow.id]: 0 }));
+    setCustomInput('');
+  };
+
+  const handleRemoveRow = (id: string) => {
+    setRows(rows.filter(row => row.id !== id));
+    setValues(prev => {
+      const newValues = { ...prev };
+      delete newValues[id];
+      return newValues;
+    });
   };
 
   const handleSubmit = () => {
@@ -130,6 +156,40 @@ export const UdgGlassPercentageTable = ({ data, validation }: UdgGlassPercentage
         </div>
       )}
 
+      {/* Add Custom Entry */}
+      {data.allowCustomEntries !== false && (
+        <div className="mb-4 flex gap-2">
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddCustom();
+              }
+            }}
+            placeholder="Add your own activity..."
+            disabled={isLoading}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+          <button
+            onClick={handleAddCustom}
+            disabled={!customInput.trim() || isLoading}
+            className={cn(
+              'px-4 py-2 rounded-lg text-sm font-light',
+              'bg-primary-500 text-white',
+              'hover:bg-primary-600 transition-colors',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              'flex items-center gap-2'
+            )}
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </button>
+        </div>
+      )}
+
       <div className="glass-effect rounded-xl overflow-hidden border-2 border-gray-200">
         <table className="w-full">
           <thead className="bg-gray-100">
@@ -140,6 +200,7 @@ export const UdgGlassPercentageTable = ({ data, validation }: UdgGlassPercentage
               <th className="px-4 py-3 text-right text-sm font-light text-gray-700">
                 {data.columns?.[1]?.label || 'Your Time %'}
               </th>
+              <th className="px-4 py-3 w-12"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -176,6 +237,18 @@ export const UdgGlassPercentageTable = ({ data, validation }: UdgGlassPercentage
                     <span className="text-sm text-gray-500 w-6">%</span>
                   </div>
                 </td>
+                <td className="px-4 py-3">
+                  {row.isCustom && (
+                    <button
+                      onClick={() => handleRemoveRow(row.id)}
+                      disabled={isLoading}
+                      className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
+                      title="Remove this entry"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </td>
               </motion.tr>
             ))}
           </tbody>
@@ -203,6 +276,7 @@ export const UdgGlassPercentageTable = ({ data, validation }: UdgGlassPercentage
                   )}
                 </div>
               </td>
+              <td className="px-4 py-3"></td>
             </tr>
           </tfoot>
         </table>

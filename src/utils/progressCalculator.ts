@@ -4,6 +4,7 @@
  */
 
 export const SURVEY_PHASES = [
+  'intro',
   'introduction',
   'phase_overview',
   'deep_dive',
@@ -14,37 +15,79 @@ export const SURVEY_PHASES = [
 
 export type SurveyPhase = typeof SURVEY_PHASES[number];
 
-// Define progress ranges and steps for each phase
-// Total 18 steps distributed across 6 phases
+// Static progress mapping - each step has a fixed percentage
+const STEP_PROGRESS: Record<string, number> = {
+  // Intro (0-5%)
+  'intro': 5,
+  
+  // Introduction (6-35%)
+  'greeting_agency': 10,
+  'department': 15,
+  'role': 20,
+  'job_level': 25,
+  'work_type_distribution': 30,
+  'primary_focus': 35,
+  
+  // Phase Overview (36-45%)
+  'phase_overview_intro': 36,
+  'phase_selection': 40,
+  'phase_time_allocation': 45,
+  
+  // Deep Dive (46-60%) - iterative steps will use dynamic calculation
+  'deep_dive_start': 55,
+  
+  // Tool Mapping (61-75%)
+  'collect_tools': 65,
+  'map_tools_start': 70,
+  'ai_integration': 72,
+  'ai_tools_details': 74,
+  
+  // Inefficiencies (76-90%)
+  'time_wasters': 80,
+  'collaboration_friction': 84,
+  'automation_identification': 87,
+  'magic_wand_automation': 90,
+  
+  // Validation (91-100%)
+  'quick_recap': 95,
+  'complete': 100
+};
+
+// Keep phase ranges for phase names
 const PHASE_PROGRESS_MAP: Record<SurveyPhase, { start: number; end: number; steps: string[] }> = {
+  intro: {
+    start: 0,
+    end: 5,
+    steps: ['intro']
+  },
   introduction: { 
-    start: 0, 
-    end: 38,  // 7 steps (~39% of survey)
-    steps: ['greeting_agency', 'department', 'role', 'job_level', 'time_in_role', 'work_type_distribution', 'primary_focus']
+    start: 6, 
+    end: 35,
+    steps: ['greeting_agency', 'department', 'role', 'job_level', 'work_type_distribution', 'primary_focus']
   },
   phase_overview: { 
-    start: 39, 
-    end: 49,  // 2 steps (~10%)
-    steps: ['phase_selection', 'phase_time_allocation']
+    start: 36, 
+    end: 45,
+    steps: ['phase_overview_intro', 'phase_selection', 'phase_time_allocation']
   },
   deep_dive: { 
-    start: 50, 
-    end: 59,  // 1 iterative step (~10%)
-    steps: ['deep_dive_start'] // Iterative - progress calculated differently
+    start: 46, 
+    end: 60,
+    steps: ['deep_dive_start']
   },
   tool_mapping: { 
-    start: 60, 
-    end: 74,  // 3 steps (1 iterative) (~15%)
-    steps: ['collect_tools', 'map_tools_start', 'ai_integration'] // map_tools_start is iterative
+    start: 61, 
+    end: 75,
+    steps: ['collect_tools', 'map_tools_start', 'ai_integration', 'ai_tools_details']
   },
   inefficiencies: { 
-    start: 75, 
-    end: 94,  // 4 steps (~20%)
+    start: 76, 
+    end: 90,
     steps: ['time_wasters', 'collaboration_friction', 'automation_identification', 'magic_wand_automation']
   },
   validation: { 
-    start: 95, 
-    end: 100,  // 1 step (~5%)
+    start: 91, 
+    end: 100,
     steps: ['quick_recap', 'complete']
   },
 };
@@ -63,42 +106,38 @@ export const calculateProgress = (
 ): number => {
   if (!phase) return 0;
 
-  const phaseConfig = PHASE_PROGRESS_MAP[phase as SurveyPhase];
-  if (!phaseConfig) {
-    console.warn(`Unknown phase: ${phase}, defaulting to 0%`);
-    return 0;
-  }
-
-  // For iterative steps (deep_dive, map_tools), calculate progress based on iteration
-  if (currentStep && (currentStep === 'deep_dive_start' || currentStep === 'map_tools_start') && iterationState) {
-    const phaseRange = phaseConfig.end - phaseConfig.start;
-    const iterProgress = ((iterationState.currentIndex + 1) / iterationState.totalPhases) * phaseRange;
-    const calculatedProgress = Math.round(phaseConfig.start + iterProgress);
-    
-    console.log(`🎯 Iteration Progress: Phase=${phase}, Step=${currentStep}, Iteration=${iterationState.currentIndex + 1}/${iterationState.totalPhases}, Progress=${calculatedProgress}%`);
-    
-    return calculatedProgress;
-  }
-
-  // If we have step information and steps are defined for this phase
-  if (currentStep && phaseConfig.steps.length > 0) {
-    const stepIndex = phaseConfig.steps.indexOf(currentStep);
-    
-    if (stepIndex !== -1) {
-      // Calculate progress within the phase
-      const phaseRange = phaseConfig.end - phaseConfig.start;
-      const stepProgress = ((stepIndex + 1) / phaseConfig.steps.length) * phaseRange;
-      const calculatedProgress = Math.round(phaseConfig.start + stepProgress);
-      
-      console.log(`🎯 Progress calculation: Phase=${phase}, Step=${currentStep} (${stepIndex + 1}/${phaseConfig.steps.length}), Progress=${calculatedProgress}%`);
-      
-      return calculatedProgress;
+  // Use static step mapping first
+  if (currentStep && STEP_PROGRESS[currentStep]) {
+    // For iterative steps with iteration state, calculate within the step's range
+    if ((currentStep === 'deep_dive_start' || currentStep === 'map_tools_start') && iterationState) {
+      const phaseConfig = PHASE_PROGRESS_MAP[phase as SurveyPhase];
+      if (phaseConfig) {
+        const phaseRange = phaseConfig.end - phaseConfig.start;
+        const iterProgress = ((iterationState.currentIndex + 1) / iterationState.totalPhases) * phaseRange;
+        const calculatedProgress = Math.round(phaseConfig.start + iterProgress);
+        
+        console.log(`🎯 Iteration Progress: Step=${currentStep}, Iteration=${iterationState.currentIndex + 1}/${iterationState.totalPhases}, Progress=${calculatedProgress}%`);
+        
+        return calculatedProgress;
+      }
     }
+    
+    // Use static progress for this step
+    const progress = STEP_PROGRESS[currentStep];
+    console.log(`🎯 Static Progress: Step=${currentStep}, Progress=${progress}%`);
+    return progress;
   }
 
-  // Default: return middle of the phase range for better UX
-  const midPoint = Math.round((phaseConfig.start + phaseConfig.end) / 2);
-  return midPoint;
+  // Fallback: use phase range
+  const phaseConfig = PHASE_PROGRESS_MAP[phase as SurveyPhase];
+  if (phaseConfig) {
+    const midPoint = Math.round((phaseConfig.start + phaseConfig.end) / 2);
+    console.log(`⚠️ No step info, using phase midpoint: Phase=${phase}, Progress=${midPoint}%`);
+    return midPoint;
+  }
+
+  console.warn(`Unknown phase and step: ${phase}/${currentStep}, defaulting to 0%`);
+  return 0;
 };
 
 /**
@@ -137,6 +176,7 @@ export const calculateDetailedProgress = (
  */
 export const getPhaseName = (phase: string | undefined): string => {
   const phaseNames: Record<SurveyPhase, string> = {
+    intro: 'Welcome',
     introduction: 'Introduction & Demographics',
     phase_overview: 'Phase Overview',
     deep_dive: 'Deep Dive',

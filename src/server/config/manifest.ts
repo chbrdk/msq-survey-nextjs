@@ -13,40 +13,53 @@ export const manifest = {
     agencies: {
       type: "enum" as const,
       strict: true,
-      values: ["MSQ", "UDG", "MMT", "26DX", "SPACESHP", "THE GATE"],
-      error_message: "I don't have that agency in my system. Could you confirm which of these agencies you work for: MSQ, UDG, MMT, 26DX, SPACESHP, or THE GATE?"
+      values: [
+        "MSQ",
+        "UDG",
+        "MMT",
+        "26PMX",
+        "Miri",
+        "Walk-in-Media",
+        "The Gate",
+        "The Gate US",
+        "Elmwood",
+        "Sport+Ents",
+        "Stein",
+        "SPCSHP",
+        "M3 Labs",
+        "Wooshii Assist",
+        "Smarts Global",
+        "The Forge",
+        "Freemavens",
+        "Precious Media"
+      ],
+      error_message: "I don't have that agency in my system. Could you confirm which agency you work for?"
     },
     departments: {
       type: "enum" as const,
       strict: false,
       values: [
-        "Creative & Design",
-        "Content & Strategy",
-        "Account Management",
-        "Paid Media & Performance",
-        "SEO & Organic Growth",
-        "Analytics & Insights",
-        "Project/Delivery Management",
-        "Business Development",
-        "Operations & Admin",
+        "Engineering",
+        "Consulting",
         "Finance",
-        "HR & People",
-        "Technology & Development",
-        "UX/UI Design",
-        "Engineering/Development"
+        "Client Services",
+        "Service Delivery",
+        "Experience Design",
+        "Exec Team",
+        "People",
+        "Growth",
+        "Operations",
+        "IT"
       ]
     },
     job_levels: {
       type: "enum" as const,
       strict: true,
       values: [
-        "Junior (0-2 years experience)",
-        "Mid-level (2-5 years experience)",
-        "Senior (5+ years experience)",
-        "Lead/Supervisor",
-        "Manager/Director",
-        "VP/Senior Leadership",
-        "C-Suite/Partner"
+        "Early career (Less than 3 years)",
+        "Mid-level (3-5 years)",
+        "Senior (6-10 years)",
+        "Expert/Executive (More than 10 years)"
       ]
     },
     time_in_role: {
@@ -61,37 +74,33 @@ export const manifest = {
     },
     work_focus: {
       type: "enum" as const,
-      strict: true,
+      strict: false,
       values: [
         "Individual contributor (hands-on execution)",
         "Team management + some execution",
         "Primarily management/oversight",
         "Client-facing/relationship management",
-        "Cross-functional/strategic"
+        "Cross-functional/strategic",
+        "Other"
       ]
     },
     billability_categories: {
       type: "items" as const,
       values: [
         {
-          label: "Billable to clients",
+          label: "Client billable",
           key: "billable",
-          description: "Direct client project work"
+          description: "Time spent on work that can be invoiced to clients, including project delivery, client meetings, and revisions."
         },
         {
-          label: "Non-billable but client-related",
-          key: "non_billable_client",
-          description: "Client communication, planning, etc."
+          label: "New business",
+          key: "business_dev",
+          description: "Time spent pursuing new clients or opportunities, including pitches, proposals, networking, and business development activities."
         },
         {
           label: "Internal operations/admin",
           key: "internal_ops",
-          description: "Meetings, admin tasks, etc."
-        },
-        {
-          label: "Business development",
-          key: "business_dev",
-          description: "Pitches, proposals, networking"
+          description: "Time spent on running the agency itself, including meetings, training, HR, finance, systems, and general administration."
         }
       ]
     },

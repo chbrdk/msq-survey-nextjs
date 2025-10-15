@@ -229,3 +229,133 @@ export function parseConfirmation(transcript: string): boolean | null {
   return null;
 }
 
+/**
+ * Universal Voice Response Parser
+ * Parses transcript based on component type and returns structured data
+ */
+export interface ParsedVoiceResponse {
+  data: any;
+  confidence: number;
+  requiresConfirmation: boolean;
+  transcript: string;
+}
+
+export function parseVoiceResponse(
+  transcript: string,
+  componentType: string,
+  componentProps: any
+): ParsedVoiceResponse | null {
+  if (!transcript || !transcript.trim()) {
+    return null;
+  }
+
+  const cleanTranscript = transcript.trim();
+
+  switch (componentType) {
+    case 'button-group': {
+      const options = componentProps.options || [];
+      const isMultiple = componentProps.multiple === true;
+
+      if (isMultiple) {
+        // Multi-select
+        const matches = parseMultiSelect(cleanTranscript, options);
+        if (matches.length > 0) {
+          const avgConfidence = matches.reduce((sum, m) => sum + m.confidence, 0) / matches.length;
+          return {
+            data: matches.map(m => m.value),
+            confidence: avgConfidence,
+            requiresConfirmation: avgConfidence < 0.8,
+            transcript: cleanTranscript
+          };
+        }
+      } else {
+        // Single select
+        const match = parseButtonChoice(cleanTranscript, options);
+        if (match) {
+          return {
+            data: match.value,
+            confidence: match.confidence,
+            requiresConfirmation: match.confidence < 0.8,
+            transcript: cleanTranscript
+          };
+        }
+      }
+      break;
+    }
+
+    case 'info-message': {
+      // For info-message with acknowledgement, check if user said yes/ok
+      if (componentProps.requiresAcknowledgement) {
+        const confirmed = parseConfirmation(cleanTranscript);
+        if (confirmed === true) {
+          return {
+            data: 'acknowledged',
+            confidence: 1.0,
+            requiresConfirmation: false,
+            transcript: cleanTranscript
+          };
+        }
+      }
+      break;
+    }
+
+    case 'input':
+    case 'guided-input': {
+      // Direct text input
+      return {
+        data: parseTextInput(cleanTranscript),
+        confidence: 1.0,
+        requiresConfirmation: true, // Always confirm text input
+        transcript: cleanTranscript
+      };
+    }
+
+    case 'multi-select':
+    case 'smart-multi-select': {
+      const options = componentProps.options || [];
+      const matches = parseMultiSelect(cleanTranscript, options);
+      
+      if (matches.length > 0) {
+        const avgConfidence = matches.reduce((sum, m) => sum + m.confidence, 0) / matches.length;
+        return {
+          data: matches.map(m => m.value),
+          confidence: avgConfidence,
+          requiresConfirmation: avgConfidence < 0.8,
+          transcript: cleanTranscript
+        };
+      }
+      break;
+    }
+
+    case 'percentage-table': {
+      // For percentage allocation
+      const items = componentProps.items || componentProps.rows || [];
+      const percentages = parsePercentages(cleanTranscript, items);
+      
+      if (Object.keys(percentages).length > 0) {
+        return {
+          data: Object.entries(percentages).map(([key, percentage]) => ({
+            phase: items.find((i: any) => i.key === key)?.label || key,
+            percentage
+          })),
+          confidence: 0.7, // Lower confidence for complex data
+          requiresConfirmation: true, // Always confirm percentages
+          transcript: cleanTranscript
+        };
+      }
+      break;
+    }
+
+    default:
+      // Fallback: return raw transcript
+      return {
+        data: cleanTranscript,
+        confidence: 0.5,
+        requiresConfirmation: true,
+        transcript: cleanTranscript
+      };
+  }
+
+  return null;
+}
+

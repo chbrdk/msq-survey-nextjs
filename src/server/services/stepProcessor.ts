@@ -10,6 +10,7 @@ import { handleRecapStep } from '../handlers/recapHandler';
 import { handleDeepDiveStep } from '../handlers/deepDiveHandler';
 import { handleMapToolsStep } from '../handlers/mapToolsHandler';
 import { handlePhaseAllocationStep } from '../handlers/phaseAllocationHandler';
+import { handleAiIntegrationStep } from '../handlers/aiIntegrationHandler';
 import { getPhaseForStep } from '../utils/phaseMapper';
 
 export async function processStep(
@@ -72,6 +73,10 @@ export async function processStep(
       
       case 'recap-handler':
         result = await handleRecapStep(userResponse, conversationState);
+        break;
+      
+      case 'ai-integration-handler':
+        result = await handleAiIntegrationStep(userResponse, conversationState);
         break;
       
       default:

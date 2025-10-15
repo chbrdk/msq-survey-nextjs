@@ -429,14 +429,21 @@ export const UdgGlassMultiSelect = ({ data }: UdgGlassMultiSelectProps) => {
                   )}
                 </motion.div>
 
-                <span
-                  className={cn(
-                    'font-light text-base flex-1',
-                    isSelected ? 'text-gray-900' : 'text-gray-800 group-hover:text-gray-900'
+                <div className="flex-1">
+                  <span
+                    className={cn(
+                      'font-light text-base block',
+                      isSelected ? 'text-gray-900' : 'text-gray-800 group-hover:text-gray-900'
+                    )}
+                  >
+                    {option.label}
+                  </span>
+                  {(option as any).description && (
+                    <p className="text-xs text-gray-600 font-light mt-1">
+                      {(option as any).description}
+                    </p>
                   )}
-                >
-                  {option.label}
-                </span>
+                </div>
 
                 {/* Custom Badge */}
                 {isCustom && (

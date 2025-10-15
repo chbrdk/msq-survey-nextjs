@@ -1,57 +1,60 @@
 /**
  * Hook for accessing the Voice Service singleton
- * Uses OpenAI WebRTC with fallback to Web Speech API
+ * Uses OpenAI Realtime API (WebRTC) with fallback to Web Speech API
  */
 
 import { useEffect, useRef } from 'react';
-import { OpenAIWebRTCService } from '../services/openaiWebRTCService';
+import { getOpenAIWebRTCService, OpenAIWebRTCService } from '../services/openaiWebRTCService';
 import { getWebSpeechService, WebSpeechService } from '../services/webSpeechService';
-import { useVoiceStore } from '../stores/voiceStore';
 
 type VoiceService = OpenAIWebRTCService | WebSpeechService;
 
-export function useRealtimeService(): VoiceService {
-  const serviceRef = useRef<VoiceService | null>(null);
-  const { isVoiceEnabled } = useVoiceStore();
-  
-  useEffect(() => {
-    if (isVoiceEnabled && !serviceRef.current) {
-      try {
-        // For Option A (Voice as UI layer): Use Web Speech API
-        // This ensures:
-        // - TTS just reads n8n questions (doesn't answer)
-        // - STT just transcribes user input
-        // - n8n controls the entire survey flow
-        serviceRef.current = getWebSpeechService();
-        console.log('✅ Using Web Speech API for Voice UI Layer');
-        console.log('📋 Survey flow controlled by n8n, Voice is just input/output');
-      } catch (error) {
-        console.error('Failed to initialize voice service:', error);
-        useVoiceStore.getState().setError((error as Error).message);
-      }
-    }
-    
-    // Cleanup on unmount
-    return () => {
-      if (!isVoiceEnabled && serviceRef.current) {
-        if ('disconnect' in serviceRef.current) {
-          serviceRef.current.disconnect();
-        } else if ('stop' in serviceRef.current) {
-          serviceRef.current.stop();
-          serviceRef.current.stopListening();
-        }
-      }
-    };
-  }, [isVoiceEnabled]);
-  
-  if (!serviceRef.current) {
-    try {
-      serviceRef.current = getWebSpeechService();
-    } catch (error) {
-      console.error('Error getting voice service:', error);
-    }
+// Global singleton - shared across all components
+let globalVoiceService: VoiceService | null = null;
+
+function initializeVoiceService(): VoiceService | null {
+  // Only initialize in browser, not during SSR
+  if (typeof window === 'undefined') {
+    return null;
   }
   
-  return serviceRef.current!;
+  if (!globalVoiceService) {
+    try {
+      // Use Web Speech API for survey flow
+      // This gives us simple TTS/STT without GPT taking over the conversation
+      globalVoiceService = getWebSpeechService();
+      console.log('✅ Voice Service initialized: Web Speech API (Browser TTS/STT)');
+      console.log('📋 Survey flow controlled by backend, Voice is UI layer only');
+    } catch (error) {
+      console.error('Failed to initialize Web Speech API:', error);
+      throw error;
+    }
+  }
+  return globalVoiceService;
 }
+
+export function useRealtimeService(): VoiceService | null {
+  const serviceRef = useRef<VoiceService | null>(null);
+  
+  // Initialize service only once per component, and only in browser
+  useEffect(() => {
+    if (!serviceRef.current && typeof window !== 'undefined') {
+      serviceRef.current = initializeVoiceService();
+    }
+  }, []);
+  
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      // Don't disconnect the global service when individual components unmount
+      // Service stays alive for the entire session
+      if (serviceRef.current) {
+        console.log('🔄 Component unmounted, but keeping voice service active');
+      }
+    };
+  }, []);
+  
+  return serviceRef.current;
+}
+
 

@@ -1,12 +1,16 @@
 // Phase Mapper - Maps steps to their respective phases
 export function getPhaseForStep(stepId: string): string {
+  // Intro phase
+  if (stepId === 'intro') {
+    return 'intro';
+  }
+  
   // Introduction phase
   if ([
     'greeting_agency',
     'department',
     'role',
     'job_level',
-    'time_in_role',
     'work_type_distribution',
     'primary_focus'
   ].includes(stepId)) {
@@ -15,6 +19,7 @@ export function getPhaseForStep(stepId: string): string {
   
   // Phase Overview
   if ([
+    'phase_overview_intro',
     'phase_selection',
     'phase_time_allocation'
   ].includes(stepId)) {
@@ -32,7 +37,8 @@ export function getPhaseForStep(stepId: string): string {
   if ([
     'collect_tools',
     'map_tools_start',
-    'ai_integration'
+    'ai_integration',
+    'ai_tools_details'
   ].includes(stepId)) {
     return 'tool_mapping';
   }

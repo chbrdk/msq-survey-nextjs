@@ -13,12 +13,28 @@ export interface StepDefinition {
 
 export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
   
+  // ==================== INTRO ====================
+  
+  // 0. WELCOME INTRO (Static)
+  intro: {
+    type: 'static',
+    question: "Welcome! 👋 Before we start, here's what this survey is all about:",
+    component: {
+      type: 'info-message',
+      props: {
+        message: "**Welcome to the MSQ Workflow Survey**\n\nThank you for taking 10-15 minutes to help us work smarter across our agencies.\n\n**Our Objective**\n\nWe're mapping workflows across all MSQ agencies to identify where AI and automation can eliminate repetitive tasks – freeing up more time for the strategic and creative work that drives real value for our clients and makes our jobs more fulfilling.\n\n**What We're Looking For**\n\nThis survey is designed to understand the reality of your day-to-day work:\n\n• Which tasks take up most of your time\n• Where you face bottlenecks or repetitive processes\n• What administrative work pulls you away from higher-value activities\n\n**Important to Know**\n\n• This is completely focused on understanding workflows, not individual performance\n• Your responses will directly shape how we integrate AI tools to support your work\n• The survey uses adaptive questioning to be relevant to your specific role\n\n**By sharing your experience, you're helping us build solutions that will:**\n\n• Eliminate time-consuming administrative tasks\n• Reduce project bottlenecks\n• Give you back time to focus on creative and strategic work\n\nYour perspective is crucial to making this initiative successful. Let's build a more efficient and enjoyable workplace together.",
+        requiresAcknowledgement: true
+      }
+    },
+    nextStep: 'greeting_agency'
+  },
+  
   // ==================== PHASE 1: INTRODUCTION ====================
   
   // 1. GREETING AGENCY (Static)
   greeting_agency: {
     type: 'static',
-    question: "Hi! I'm conducting workflow documentation interviews to better understand how our teams work. This will take about 15-20 minutes.\n\nWhich agency do you work for?",
+    question: "Which agency do you work for?",
     component: {
       type: 'button-group',
       props: {
@@ -64,28 +80,13 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
         columns: 1
       }
     },
-    nextStep: 'time_in_role'
-  },
-  
-  // 5. TIME IN ROLE (Static)
-  time_in_role: {
-    type: 'static',
-    question: "How long have you been in your current role?",
-    component: {
-      type: 'button-group',
-      props: {
-        options: manifest.validation_rules.time_in_role.values.map(t => ({ label: t, value: t })),
-        multiple: false,
-        columns: 2
-      }
-    },
     nextStep: 'work_type_distribution'
   },
   
-  // 6. WORK TYPE DISTRIBUTION (Static)
+  // 5. WORK TYPE DISTRIBUTION (Static)
   work_type_distribution: {
     type: 'static',
-    question: "Can you estimate what percentage of your time is spent on these categories?\n\n(These should add up to approximately 100%)",
+    question: "Can you estimate what percentage of your time is spent on these categories?\n",
     component: {
       type: 'percentage-table',
       props: {
@@ -95,7 +96,7 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
     nextStep: 'primary_focus'
   },
   
-  // 7. PRIMARY FOCUS (Static)
+  // 6. PRIMARY FOCUS (Static)
   primary_focus: {
     type: 'static',
     question: "Would you describe your work as primarily:",
@@ -107,10 +108,24 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
         columns: 1
       }
     },
-    nextStep: 'phase_selection'
+    nextStep: 'phase_overview_intro'
   },
   
   // ==================== PHASE 2: PHASE OVERVIEW ====================
+  
+  // 7. PHASE OVERVIEW INTRO (Static - Context before phase selection)
+  phase_overview_intro: {
+    type: 'static',
+    question: "Now let's talk about your workflow phases:",
+    component: {
+      type: 'info-message',
+      props: {
+        message: "We've already mapped out your workflow based on focus groups with your agency teams. Now we want to hear from you directly - which phases are you involved in, and where does your time actually go?\n\nLater, we'll ask about the tools you use, so we can focus our efforts on the solutions that will genuinely help make your work easier and more effective.",
+        requiresAcknowledgement: true
+      }
+    },
+    nextStep: 'phase_selection'
+  },
   
   // 8. PHASE SELECTION (Static - Multi-Select)
   phase_selection: {
@@ -160,16 +175,46 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
     nextStep: 'ai_integration'
   },
   
-  // 13. AI INTEGRATION (Static)
+  // 13. AI INTEGRATION (Static - simple question, always ask tools after)
   ai_integration: {
     type: 'static',
-    question: "Quick one — do you use AI tools in your work?",
+    question: "Do you use AI tools in your work?",
     component: {
       type: 'button-group',
       props: {
         options: manifest.validation_rules.ai_usage_options.values,
         multiple: false,
         columns: 1
+      }
+    },
+    nextStep: 'ai_tools_details'  // Always ask for tools
+  },
+  
+  // 13b. AI TOOLS DETAILS (Static - smart-multi-select with custom input)
+  ai_tools_details: {
+    type: 'static',
+    question: "Which AI tools do you currently use?\n\n(Select from suggestions or add your own)",
+    component: {
+      type: 'smart-multi-select',
+      props: {
+        suggestions: [
+          "ChatGPT",
+          "Claude",
+          "Midjourney",
+          "Dall-E",
+          "GitHub Copilot",
+          "Cursor",
+          "Notion AI",
+          "Grammarly",
+          "Jasper",
+          "Copy.ai",
+          "Runway",
+          "ElevenLabs",
+          "Synthesia",
+          "Other - Add your own"
+        ],
+        placeholder: "Type an AI tool name...",
+        min: 1
       }
     },
     nextStep: 'time_wasters'
@@ -187,7 +232,7 @@ export const STEP_DEFINITIONS: Record<string, StepDefinition> = {
   // 15. COLLABORATION FRICTION (Static)
   collaboration_friction: {
     type: 'static',
-    question: "Quick one — which of these collaboration frictions do you experience?",
+    question: "Which of these collaboration frictions do you experience?",
     component: {
       type: 'button-group',
       props: {

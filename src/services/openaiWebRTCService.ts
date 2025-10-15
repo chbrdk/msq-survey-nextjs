@@ -6,7 +6,6 @@
 import { useVoiceStore } from '../stores/voiceStore';
 
 export class OpenAIWebRTCService {
-  private apiKey: string;
   private peerConnection: RTCPeerConnection | null = null;
   private dataChannel: RTCDataChannel | null = null;
   private audioElement: HTMLAudioElement | null = null;
@@ -19,7 +18,19 @@ export class OpenAIWebRTCService {
     model: 'gpt-4o-realtime-preview-2024-12-17',
     modalities: ['text', 'audio'],
     voice: 'alloy',
-    instructions: 'You are a professional text-to-speech system. Read the provided text naturally and clearly. Do not add any additional commentary or responses.',
+    instructions: `You are conducting the MSQ Workflow Survey - a professional interview about work processes and automation opportunities across MSQ agencies.
+
+Your role:
+- Read survey questions naturally and conversationally
+- Listen to responses and acknowledge them briefly
+- Help clarify questions if the user is confused
+- Keep the conversation professional yet friendly
+- For percentage questions, confirm the numbers you hear (e.g., "I heard 25 percent for that activity, is that correct?")
+
+Remember:
+- This survey maps workflows to identify AI automation opportunities
+- Responses are confidential and focused on processes, not performance
+- Be encouraging and make the user feel comfortable sharing details about their work`,
     input_audio_format: 'pcm16',
     output_audio_format: 'pcm16',
     turn_detection: {
@@ -33,18 +44,18 @@ export class OpenAIWebRTCService {
     }
   };
   
-  constructor(apiKey: string) {
-    this.apiKey = apiKey;
+  constructor() {
+    // No API key needed - tokens come from backend
   }
   
   /**
-   * Create ephemeral token from OpenAI
+   * Create ephemeral token from backend API
+   * This keeps the API key secure on the server
    */
   private async createEphemeralToken(): Promise<string> {
-    const response = await fetch('https://api.openai.com/v1/realtime/sessions', {
+    const response = await fetch('/api/voice/token', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -55,11 +66,11 @@ export class OpenAIWebRTCService {
     
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Failed to create ephemeral token: ${error.error?.message || response.statusText}`);
+      throw new Error(`Failed to create ephemeral token: ${error.error || response.statusText}`);
     }
     
     const data = await response.json();
-    return data.client_secret.value;
+    return data.token;
   }
   
   /**
@@ -403,14 +414,8 @@ export class OpenAIWebRTCService {
 let webRTCInstance: OpenAIWebRTCService | null = null;
 
 export function getOpenAIWebRTCService(): OpenAIWebRTCService {
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
-  
-  if (!apiKey) {
-    throw new Error('NEXT_PUBLIC_OPENAI_API_KEY is not configured. Voice features require an OpenAI API key.');
-  }
-  
   if (!webRTCInstance) {
-    webRTCInstance = new OpenAIWebRTCService(apiKey);
+    webRTCInstance = new OpenAIWebRTCService();
   }
   
   return webRTCInstance;

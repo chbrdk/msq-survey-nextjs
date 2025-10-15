@@ -3,6 +3,7 @@
  * Provides a simple interface for components to use voice features
  */
 
+import { useEffect } from 'react';
 import { useVoiceStore } from '../stores/voiceStore';
 import { useRealtimeService } from './useRealtimeService';
 
@@ -39,9 +40,29 @@ export function useVoice(): VoiceHook {
   
   const realtimeService = useRealtimeService();
   
+  // Auto-connect when voice is enabled
+  useEffect(() => {
+    if (isVoiceEnabled && realtimeService && 'connect' in realtimeService) {
+      // Only connect for OpenAI WebRTC service
+      (async () => {
+        try {
+          await realtimeService.connect();
+          console.log('🎤 Voice connection established and ready!');
+        } catch (error) {
+          console.error('Failed to connect voice service:', error);
+          setError((error as Error).message);
+        }
+      })();
+    }
+  }, [isVoiceEnabled, realtimeService, setError]);
+  
   const speak = async (text: string): Promise<void> => {
     if (!isVoiceEnabled) {
       throw new Error('Voice is not enabled');
+    }
+    
+    if (!realtimeService) {
+      throw new Error('Voice service not available (SSR or initialization failed)');
     }
     
     try {
@@ -56,6 +77,10 @@ export function useVoice(): VoiceHook {
   const listen = async (timeout?: number): Promise<string> => {
     if (!isVoiceEnabled) {
       throw new Error('Voice is not enabled');
+    }
+    
+    if (!realtimeService) {
+      throw new Error('Voice service not available (SSR or initialization failed)');
     }
     
     try {

@@ -36,7 +36,9 @@ export interface TableRow {
   id: string;
   activity?: string;
   phase?: string;
+  description?: string;
   percentage?: number;
+  isCustom?: boolean;
   [key: string]: any;
 }
 
@@ -52,6 +54,7 @@ export interface TableComponentData {
   }>;
   rows: TableRow[];
   allowAddRow?: boolean;
+  allowCustomEntries?: boolean;
   additionalOptions?: {
     type: 'dropdown';
     label: string;
@@ -62,6 +65,7 @@ export interface TableComponentData {
 export interface MultiSelectOption {
   id: string;
   label: string;
+  description?: string;
 }
 
 export interface MultiSelectComponentData {

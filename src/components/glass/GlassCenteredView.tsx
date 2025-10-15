@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Bot, AlertCircle } from 'lucide-react';
 import type { Message } from '@/types';
@@ -8,7 +8,10 @@ import { TypewriterText } from './TypewriterText';
 import { GlassComponentRenderer } from './GlassComponentRenderer';
 import { CompletionScreen } from './CompletionScreen';
 import { QuickRecapSummary } from './QuickRecapSummary';
+import { VoiceConfirmationModal } from './VoiceConfirmationModal';
 import { useChatStore } from '@/stores/chatStore';
+import { useVoice } from '@/hooks/useVoice';
+import { useVoiceFlow } from '@/hooks/useVoiceFlow';
 
 interface GlassCenteredViewProps {
   message?: Message;
@@ -23,10 +26,68 @@ export const GlassCenteredView = ({
 }: GlassCenteredViewProps) => {
   const [isTextComplete, setIsTextComplete] = useState(false);
   const { isComplete } = useChatStore();
+  const { isActive: isVoiceActive, speak, isSpeaking } = useVoice();
+  const {
+    parsedResponse,
+    showConfirmation,
+    startListening,
+    confirmResponse,
+    retryVoiceInput,
+    cancelVoiceInput
+  } = useVoiceFlow();
+  const lastSpokenMessageId = useRef<string | null>(null);
+  const hasStartedListeningRef = useRef<boolean>(false);
   
   // Check if message is a "Quick Recap"
   const isQuickRecap = message?.content.toLowerCase().includes('quick recap') || 
                        message?.content.toLowerCase().includes('zusammenfassung');
+  
+  // Auto-speak new questions when voice is active
+  useEffect(() => {
+    const shouldSpeak = 
+      isVoiceActive && 
+      isTextComplete && 
+      message?.id && 
+      message.id !== lastSpokenMessageId.current &&
+      !isSpeaking &&
+      !isLoading &&
+      !isComplete &&
+      message.role === 'assistant';
+    
+    if (shouldSpeak) {
+      lastSpokenMessageId.current = message.id;
+      hasStartedListeningRef.current = false; // Reset listening flag
+      console.log('🎤 Auto-speaking question:', message.content);
+      
+      speak(message.content).catch(error => {
+        console.error('Failed to auto-speak:', error);
+      });
+    }
+  }, [isVoiceActive, isTextComplete, message?.id, message?.content, message?.role, isSpeaking, isLoading, isComplete, speak]);
+  
+  // Auto-listen after speaking completes (for voice mode)
+  useEffect(() => {
+    const shouldListen = 
+      isVoiceActive &&
+      isTextComplete &&
+      !isSpeaking &&
+      !isLoading &&
+      !isComplete &&
+      message?.manifestComponent &&
+      message.id === lastSpokenMessageId.current &&
+      !hasStartedListeningRef.current &&
+      !isQuickRecap; // Don't auto-listen for recap
+    
+    if (shouldListen) {
+      hasStartedListeningRef.current = true;
+      console.log('👂 Auto-listening for response...');
+      
+      // Small delay after speaking finishes
+      setTimeout(() => {
+        startListening();
+      }, 1000);
+    }
+  }, [isVoiceActive, isTextComplete, isSpeaking, isLoading, isComplete, message?.manifestComponent, message?.id, isQuickRecap, startListening]);
   
   return (
     <div className="fixed inset-0 flex items-start justify-center px-6 pt-32 pb-20 overflow-y-auto custom-scrollbar">
@@ -163,6 +224,17 @@ export const GlassCenteredView = ({
         )}
       </AnimatePresence>
       </div>
+      
+      {/* Voice Confirmation Modal */}
+      <VoiceConfirmationModal
+        isOpen={showConfirmation}
+        transcript={parsedResponse?.transcript || ''}
+        parsedValue={JSON.stringify(parsedResponse?.data, null, 2)}
+        confidence={parsedResponse?.confidence}
+        onConfirm={confirmResponse}
+        onRetry={retryVoiceInput}
+        onTypeInstead={cancelVoiceInput}
+      />
     </div>
   );
 };

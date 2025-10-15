@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
     const userId = uuidv4();
 
     const initialState = {
-      currentPhase: 'introduction',
-      currentStep: 'greeting_agency',
+      currentPhase: 'intro',
+      currentStep: 'intro',
       collectedData: {},
       validationHistory: []
     };
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       console.warn('⚠️ MongoDB not available, skipping session save');
     }
 
-    const firstStep = STEP_DEFINITIONS.greeting_agency;
+    const firstStep = STEP_DEFINITIONS.intro;
 
     return NextResponse.json({
       userId,

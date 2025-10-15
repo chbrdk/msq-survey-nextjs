@@ -51,6 +51,7 @@ export const GlassComponentRenderer: React.FC<GlassComponentRendererProps> = ({
             options: config.props.options.map((opt: any) => ({
               id: opt.value,
               label: opt.label,
+              description: opt.description,
             })),
           }}
           onSelect={(values: string[]) => {
@@ -82,7 +83,7 @@ export const GlassComponentRenderer: React.FC<GlassComponentRendererProps> = ({
     }
 
     case 'percentage-table': {
-      // Verwende die neue Glassmorphism Percentage Allocator!
+      // Verwende die GlassPercentageAllocator mit Custom-Entry Support
       const items = config.props.items || config.props.rows;
 
       if (!items || !Array.isArray(items) || items.length === 0) {
@@ -108,13 +109,16 @@ export const GlassComponentRenderer: React.FC<GlassComponentRendererProps> = ({
         id: item.key || `item-${index}`,
         phase: item.label,
         activity: item.label,
+        description: item.description,
         percentage: 0,
+        isCustom: false
       }));
 
       return (
         <GlassPercentageAllocator
           data={{
             rows: rows,
+            allowCustomEntries: true,
           }}
           validation={{
             sumTo: 100,

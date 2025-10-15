@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Minus, AlertCircle, Sparkles, Zap, RotateCcw, Mic } from 'lucide-react';
+import { Plus, Minus, AlertCircle, Sparkles, Zap, RotateCcw, Mic, X } from 'lucide-react';
 import { useChatStore } from '@/stores/chatStore';
 import { cn } from '@/lib/utils';
 import type { TableComponentData, ValidationRules } from '@/types';
@@ -22,6 +22,7 @@ export const GlassPercentageAllocator = ({
   const [values, setValues] = useState<Record<string, number>>({});
   const [rows, setRows] = useState(data.rows || []);
   const [error, setError] = useState<string | null>(null);
+  const [customInput, setCustomInput] = useState('');
   const [isVoiceGuiding, setIsVoiceGuiding] = useState(false);
   const [currentVoicePhaseIndex, setCurrentVoicePhaseIndex] = useState(0);
   const { sendResponse, isLoading } = useChatStore();
@@ -90,6 +91,30 @@ export const GlassPercentageAllocator = ({
       newValues[row.id] = equalShare + (index === 0 ? remainder : 0);
     });
     setValues(newValues);
+  };
+
+  const handleAddCustom = () => {
+    if (!customInput.trim()) return;
+    
+    const newRow = {
+      id: `custom-${Date.now()}`,
+      phase: customInput.trim(),
+      activity: customInput.trim(),
+      percentage: 0,
+      isCustom: true
+    };
+    setRows([...rows, newRow]);
+    setValues(prev => ({ ...prev, [newRow.id]: 0 }));
+    setCustomInput('');
+  };
+
+  const handleRemoveRow = (id: string) => {
+    setRows(rows.filter(row => row.id !== id));
+    setValues(prev => {
+      const newValues = { ...prev };
+      delete newValues[id];
+      return newValues;
+    });
   };
 
   const handleReset = () => {
@@ -235,6 +260,45 @@ export const GlassPercentageAllocator = ({
         </button>
       </div>
 
+      {/* Add Custom Entry */}
+      {data.allowCustomEntries !== false && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex gap-2"
+        >
+          <input
+            type="text"
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddCustom();
+              }
+            }}
+            placeholder="Add your own activity..."
+            disabled={isLoading || isVoiceGuiding}
+            className="flex-1 px-4 py-2 rounded-xl backdrop-blur-lg bg-white/60 border border-white/40 shadow-sm text-sm font-light text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400/50 disabled:opacity-50"
+          />
+          <button
+            onClick={handleAddCustom}
+            disabled={!customInput.trim() || isLoading || isVoiceGuiding}
+            className={cn(
+              'px-4 py-2 rounded-xl backdrop-blur-lg font-light text-sm',
+              'bg-blue-500/80 text-white shadow-md',
+              'hover:bg-blue-600/80 hover:shadow-lg hover:scale-105',
+              'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
+              'active:scale-95 transition-all duration-200',
+              'flex items-center gap-2'
+            )}
+          >
+            <Plus className="w-4 h-4" />
+            Add
+          </button>
+        </motion.div>
+      )}
+
       {/* Phase Cards */}
       <div className="space-y-3">
         {rows.map((row, index) => {
@@ -255,18 +319,38 @@ export const GlassPercentageAllocator = ({
               )}
             >
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-light text-gray-900">
-                  {row.phase || row.activity}
-                </h3>
-                <motion.div
-                  key={value}
-                  initial={{ scale: 1.2 }}
-                  animate={{ scale: 1 }}
-                  className="text-2xl font-light text-gray-900"
-                >
-                  {value}%
-                </motion.div>
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-base font-light text-gray-900 flex-1">
+                    {row.phase || row.activity}
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      key={value}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      className="text-2xl font-light text-gray-900"
+                    >
+                      {value}%
+                    </motion.div>
+                    {row.isCustom && (
+                      <button
+                        onClick={() => handleRemoveRow(row.id)}
+                        disabled={isLoading || isVoiceGuiding}
+                        className="text-red-500 hover:text-red-700 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Remove this activity"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* Description */}
+                {row.description && (
+                  <p className="text-sm text-gray-600 font-light">
+                    {row.description}
+                  </p>
+                )}
               </div>
 
               {/* Controls */}
